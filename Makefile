@@ -1,9 +1,9 @@
 CXX = g++
-CXXFLAGS = -Wall -pedantic -IFrameGrabber/include
-LDFLAGS = -lopencv_core -lopencv_imgproc -lopencv_imgcodecs
+CXXFLAGS = -Wall -pedantic -IUvcGrabber/include
+LDFLAGS = -lopencv_core -lopencv_imgproc -lopencv_imgcodecs -lopencv_videoio -lopencv_highgui -lstdc++fs
 
-SRC_DIR=FrameGrabber/src
-OBJ_DIR=FrameGrabber/obj
+SRC_DIR=UvcGrabber/src
+OBJ_DIR=UvcGrabber/obj
 
 SRCS = $(wildcard $(SRC_DIR)/*.cpp)
 OBJS = $(patsubst $(SRC_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(SRCS))
@@ -17,7 +17,7 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
 	$(CXX) $(CXXFLAGS) -c $< $(LDFLAGS) -o $@
 
 clean:
-	rm -f $(OBJS) $(TARGET)
+	rm -rf $(OBJ_DIR) $(TARGET)
 	
 .PHONY: clean
 
