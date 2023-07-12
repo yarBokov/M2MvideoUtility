@@ -76,6 +76,13 @@ void ArgsManager::invokeCameraStrategy(UvcGrabber& grabber, bool deviceIsGiven)
 			throw std::runtime_error("");
 
 	}
+	else if (mode == "v" || mode == "video" || mode == "vid")
+	{
+		if (!folder_funcs::makeFolder(argvVec[3 + int(deviceIsGiven)].c_str(), fullFolderPath, false))
+			throw std::runtime_error("");
+		if (!grabber.CaptureVideo(atoi(argvVec[2 + int(deviceIsGiven)].c_str()), fullFolderPath))
+			throw std::runtime_error("");
+	} 
 	else
-		std::cerr << "Указан неопознанный режим работы!\n";	
+		throw std::runtime_error("Указан неопознанный режим работы!");	
 }

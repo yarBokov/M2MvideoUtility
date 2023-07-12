@@ -18,6 +18,7 @@ class UvcGrabber
 
 		bool GrabFrames(int frames, const std::string& fullFolderPath, int frameWidth = 640 , int frameHeight = 480 );
 		bool AddFrameTimeTag(std::string& fullFolderPath, int coordX = 10, int coordY = 30, std::string ext =".jpg");
+		bool CaptureVideo(int duration, const std::string& fullFolderPath);
 	private:
 		std::string _cameraDeviceName;
 		std::vector<std::string> _framesTimeVec;

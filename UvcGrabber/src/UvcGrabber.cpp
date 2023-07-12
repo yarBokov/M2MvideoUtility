@@ -167,6 +167,59 @@ bool UvcGrabber::AddFrameTimeTag(std::string& fullFolderPath, int coordX /* = 10
     return true;
 }
 
+bool UvcGrabber::CaptureVideo(int duration, const std::string& fullFolderPath)
+{
+    using namespace cv;
+    VideoCapture cap(_cameraDeviceName);
+    if (!cap.isOpened())
+    {
+        std::cerr << "Error opening video device in Video Capture function!\n";
+        return false;
+    }
+
+    time_t now = time(NULL);
+    struct tm* localTime = localtime(&now);
+    std::stringstream ss;
+    ss << fullFolderPath << "/video_" << localTime->tm_year + 1900 << "-"
+       << std::setw(2) << std::setfill('0') << localTime->tm_mon + 1 << "-"
+       << std::setw(2) << std::setfill('0') << localTime->tm_mday << "_"
+       << std::setw(2) << std::setfill('0') << localTime->tm_hour << "-"
+       << std::setw(2) << std::setfill('0') << localTime->tm_min << "-"
+       << std::setw(2) << std::setfill('0') << localTime->tm_sec << ".avi";
+    std::string videoPath = ss.str();
+
+
+    VideoWriter writer(videoPath, VideoWriter::fourcc('M', 'J', 'P', 'G'), 30.0, Size(640, 480));
+    if (!writer.isOpened())
+    {
+        std::cerr << "Error creating video file!\n";
+        return false;
+    }
+
+    time_t startTime = time(NULL);
+    while (difftime(time(NULL), startTime) < duration)
+    {
+        Mat frame;
+        cap >> frame;
+
+        if (frame.empty())
+        {
+            std::cerr << "Error capturing frame!\n";
+            break;
+        }
+
+        writer.write(frame);
+        imshow("Захваченное видео", frame);
+        if (waitKey(1) == 'q')
+            break;
+
+    }
+    writer.release();
+    cap.release();
+    destroyAllWindows();
+    return true;
+}
+
 void UvcGrabber::Ioctl(int fd, int request, void* arg, const std::string& errmsg)
 {
     if (ioctl(fd, request, arg) == -1)
