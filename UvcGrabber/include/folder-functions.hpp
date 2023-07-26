@@ -8,7 +8,7 @@ namespace folder_funcs
 {
 	bool clearDirectory(const std::string&  path);
 	bool isDirectoryEmpty(const std::string&  path);
-	bool makeFolder(const char* folderName, std::string& fullPath, bool toDelete);
+	bool makeFolder(const char* folderName, std::string& fullPath, bool toClear);
 	void deleteDirectoriesExcept(const std::string& hostDirectory, std::vector < std::string > directories);
     std::string getProgramWorkingDirectory();
 }

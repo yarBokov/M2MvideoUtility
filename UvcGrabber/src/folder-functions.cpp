@@ -8,6 +8,8 @@ namespace folder_funcs
 {
 	namespace fs = std::experimental::filesystem;
 
+	static const std::string WORK_FOLDER_NAME = "/UvcGrabber/";
+
 	bool clearDirectory(const std::string& path)
 	{
 		try {
@@ -16,7 +18,7 @@ namespace folder_funcs
 	        	fs::remove_all(entry.path());
 	    	}
     	} catch (const fs::filesystem_error& e) {
-    		std::cerr << "Ошибка при удалении файла: " << e.what() << "\n";
+    		std::cerr << "Error occured while deleting file: " << e.what() << "\n";
     		return false;
     	}
 		return true;
@@ -26,20 +28,19 @@ namespace folder_funcs
     {
     	if (!fs::exists(fs::path(path)))
     	{
-	        std::cerr << "Папки " + path + " не существует!\n";
+	        std::cerr << "Folder " + path + " does not exist!\n";
         	return false;
     	}
     	fs::directory_iterator it(path);
     	return fs::begin(it) == fs::end(it);
     }
 
-    bool makeFolder(const char* folderName, std::string& fullPath, bool toDelete)
+    bool makeFolder(const char* folderName, std::string& fullPath, bool toClear)
     {
-    	fullPath = fs::current_path().string();
-    	fullPath += "/UvcGrabber/" + std::string(folderName);
+    	fullPath = getProgramWorkingDirectory() + std::string(folderName);
 	    if (fs::is_directory(fullPath)) 
 	    {
-	    	if (!toDelete)
+	    	if (!toClear)
 	    	{
 	    		return true;
 	    	}
@@ -71,12 +72,12 @@ namespace folder_funcs
         		}
     		}
     	} catch(const fs::filesystem_error& e) {
-    		std::cerr << "Ошибка при удалении директории: " << e.what() << "\n";
+    		std::cerr << "Error occured while deleting directory: " << e.what() << "\n";
     	}
     }
 
     std::string getProgramWorkingDirectory()
     {
-    	return fs::current_path().string() + std::string("/UvcGrabber/");
+    	return fs::current_path().string() + WORK_FOLDER_NAME;
     }
 }

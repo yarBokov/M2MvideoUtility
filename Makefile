@@ -8,7 +8,7 @@ OBJ_DIR=UvcGrabber/obj
 SRCS = $(wildcard $(SRC_DIR)/*.cpp)
 OBJS = $(patsubst $(SRC_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(SRCS))
 
-TARGET = prog
+TARGET = uvcgrab
 
 $(TARGET): $(OBJS)
 	$(CXX) $(CXXFLAGS) $^ $(LDFLAGS) -o $@

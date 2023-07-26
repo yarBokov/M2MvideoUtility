@@ -4,6 +4,8 @@
 #include <string>
 #include <vector>
 #include <opencv2/core/mat.hpp>
+#include <opencv2/opencv.hpp>
+#include "IoctlManager.hpp"
 
 class UvcGrabber
 {
@@ -16,18 +18,27 @@ class UvcGrabber
 
 		void setDevice(const std::string& deviceName);
 
-		bool GrabFrames(int frames, const std::string& fullFolderPath, int frameWidth = 640 , int frameHeight = 480 );
+		bool GrabFrames(int frames, const std::string& fullFolderPath, int frameWidth = 640 , int frameHeight = 480);
 		bool AddFrameTimeTag(std::string& fullFolderPath, int coordX = 10, int coordY = 30, std::string ext =".jpg");
 		bool CaptureVideo(int duration, const std::string& fullFolderPath);
 	private:
 		std::string _cameraDeviceName;
 		std::vector<std::string> _framesTimeVec;
+		IoctlManager ioManager;
 
-		void Ioctl(int fd, int request, void* arg, const std::string& errmsg );
-		void freeResources(int fd, int n, void** mem, struct v4l2_buffer* buffers);
+		void setFrameFormat(int width, int height, struct v4l2_format* fmt);
+		void setRequestedBuffers(unsigned int req_count, struct v4l2_requestbuffers* req);
+		void setFrameBuffer(int index, struct v4l2_buffer* buffer);
+		void saveAllFrames(int frames, const char* folderPath, void** memory);
+		void saveOneFrame(char* filename, void** memory, struct v4l2_buffer* buffer);
+
 		cv::Mat getOpenCVImage(const std::string& imagePath);
 		void putOpenCVText(int coordX , int coordY, cv::Mat& image, const std::string& text);
 		void writeImageOpenCV(const std::string& filePath, cv::Mat& image);
-};
 
+		void captureFrameByFrame(int duration, cv::VideoCapture cap, cv::VideoWriter writer);
+
+		void free_V4L_Resources(int fd, int n, void** memory, struct v4l2_buffer* buffers);
+		void free_OpenCV_Resources(cv::VideoWriter writer, cv::VideoCapture cap);
+};
 #endif
