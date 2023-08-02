@@ -12,12 +12,10 @@ class UvcGrabber
 {
 	public:
 		UvcGrabber(std::unique_ptr < IoctlOperations > ioFuncs);
-
+		~UvcGrabber();
 		UvcGrabber(const UvcGrabber& grabber) = delete;
 		UvcGrabber& operator=(const UvcGrabber& other) = delete;
-
 		void setDevice(const std::string& deviceName);
-
 		bool GrabFrames(int frames, const std::string& fullFolderPath, int frameWidth = 640 , int frameHeight = 480);
 		bool AddFrameTimeTag(std::string& fullFolderPath, int coordX = 10, int coordY = 30, std::string ext =".jpg");
 		bool CaptureVideo(int duration, const std::string& fullFolderPath);

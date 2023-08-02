@@ -1,11 +1,12 @@
 #include "ArgsManager.hpp"
 #include <iostream>
 #include <stdexcept>
-#include "folder-functions.hpp"
+#include "GrabberFolderManager.hpp"
 
-ArgsManager::ArgsManager(int argc, char** argv)
+ArgsManager::ArgsManager(int argc, char** argv, std::unique_ptr < FolderOperations > folderOps)
 {
 	this->argc = argc;
+	folderManager = std::move(folderOps);
     for (int i = 0; i < argc; ++i) {
         argvVec.push_back(argv[i]);
     }
@@ -57,7 +58,7 @@ void ArgsManager::invokeClearStrategy(UvcGrabber& grabber)
 	if (mode == "clear")
 	{
 		std::vector < std::string > safeDirs = { "src", "include", "obj" };
-		folder_funcs::deleteDirectoriesExcept(folder_funcs::getProgramWorkingDirectory(), safeDirs);
+		folderManager->deleteDirectoriesExcept(safeDirs);
 	}
 	else
 		throw std::runtime_error("With this count of parameters program can only accept 'clear' comand");
@@ -65,22 +66,29 @@ void ArgsManager::invokeClearStrategy(UvcGrabber& grabber)
 
 void ArgsManager::invokeCameraStrategy(UvcGrabber& grabber, bool deviceIsGiven)
 {
-	std::string fullFolderPath;
+	GrabberFolderManager* gfmPtr = dynamic_cast < GrabberFolderManager* >(folderManager.get());
+	if (gfmPtr == nullptr)
+	{
+		throw std::runtime_error("Error while casting FolderOperations pointer to GrabberFolderManager pointer!");
+	}
+	std::string imgDir = gfmPtr->getImagesFolderName();
+	std::string videoDir = gfmPtr->getVideoFolderName();
+	folderManager.reset(gfmPtr); 
 	if (mode == "f" || mode == "frames" || mode == "frame")
 	{
-		if (!folder_funcs::makeFolder(argvVec[3 + int(deviceIsGiven)].c_str(), fullFolderPath, true))
+		if (!folderManager->makeFolderForImages(argvVec[3 + int(deviceIsGiven)]))
 			throw std::runtime_error("Error occured while making folder for frames");
-		if (!grabber.GrabFrames(atoi(argvVec[2 + int(deviceIsGiven)].c_str()), fullFolderPath))
+		if (!grabber.GrabFrames(atoi(argvVec[2 + int(deviceIsGiven)].c_str()), imgDir))
 			throw std::runtime_error("Error occured while grabbing frames");
-		if (!grabber.AddFrameTimeTag(fullFolderPath))
+		if (!grabber.AddFrameTimeTag(imgDir))
 			throw std::runtime_error("Error occured while adding time tag on frames");
 
 	}
 	else if (mode == "v" || mode == "video" || mode == "vid")
 	{
-		if (!folder_funcs::makeFolder(argvVec[3 + int(deviceIsGiven)].c_str(), fullFolderPath, false))
+		if (!folderManager->makeFolderForVideo(argvVec[3 + int(deviceIsGiven)]))
 			throw std::runtime_error("Error occured while making folder for video");
-		if (!grabber.CaptureVideo(atoi(argvVec[2 + int(deviceIsGiven)].c_str()), fullFolderPath))
+		if (!grabber.CaptureVideo(atoi(argvVec[2 + int(deviceIsGiven)].c_str()), videoDir))
 			throw std::runtime_error("Error occured while capturing video");
 	} 
 	else

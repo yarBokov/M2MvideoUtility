@@ -19,7 +19,7 @@
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/videoio.hpp>
 #include <opencv2/highgui.hpp>
-#include "folder-functions.hpp"
+#include "GrabberFolderManager.hpp"
 #include <experimental/filesystem>
 
 namespace
@@ -32,6 +32,9 @@ namespace
 UvcGrabber::UvcGrabber(std::unique_ptr < IoctlOperations > ioFuncs):
     _cameraDeviceName("/dev/video0"),
     _ioManager(std::move(ioFuncs))
+{}
+
+UvcGrabber::~UvcGrabber()
 {}
 
 void UvcGrabber::setDevice(const std::string& deviceName)
@@ -101,11 +104,13 @@ bool UvcGrabber::GrabFrames(int frames, const std::string& fullFolderPath, int f
 bool UvcGrabber::AddFrameTimeTag(std::string& fullFolderPath, int coordX /* = 10*/, int coordY /* = 30 */, std::string ext /*  = ".jpg*/)
 {
     namespace fs = std::experimental::filesystem;
-    if (folder_funcs::isDirectoryEmpty(fullFolderPath))
+    auto folderOps = std::make_unique < GrabberFolderManager >();
+    if (folderOps->isDirectoryEmpty(fullFolderPath))
     {
         std::cerr << "Директория кадров пуста!\n";
         return false;
     }
+    folderOps.release();
     int frameTimeIndex = 0;
     for (const auto& entry : fs::directory_iterator(fullFolderPath))
     {
