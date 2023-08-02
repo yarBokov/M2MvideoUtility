@@ -5,13 +5,13 @@
 #include <vector>
 #include <opencv2/core/mat.hpp>
 #include <opencv2/opencv.hpp>
-#include "IoctlManager.hpp"
+#include <memory>
+#include "IoctlOperations.hpp"
 
 class UvcGrabber
 {
 	public:
-		UvcGrabber();
-		~UvcGrabber();
+		UvcGrabber(std::unique_ptr < IoctlOperations > ioFuncs);
 
 		UvcGrabber(const UvcGrabber& grabber) = delete;
 		UvcGrabber& operator=(const UvcGrabber& other) = delete;
@@ -24,7 +24,7 @@ class UvcGrabber
 	private:
 		std::string _cameraDeviceName;
 		std::vector<std::string> _framesTimeVec;
-		IoctlManager ioManager;
+		std::unique_ptr < IoctlOperations > _ioManager;
 
 		void setFrameFormat(int width, int height, struct v4l2_format* fmt);
 		void setRequestedBuffers(unsigned int req_count, struct v4l2_requestbuffers* req);

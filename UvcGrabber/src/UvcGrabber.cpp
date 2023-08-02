@@ -29,11 +29,9 @@ namespace
 }
 
 
-UvcGrabber::UvcGrabber():
-    _cameraDeviceName("/dev/video0")
-{}
-
-UvcGrabber::~UvcGrabber()
+UvcGrabber::UvcGrabber(std::unique_ptr < IoctlOperations > ioFuncs):
+    _cameraDeviceName("/dev/video0"),
+    _ioManager(std::move(ioFuncs))
 {}
 
 void UvcGrabber::setDevice(const std::string& deviceName)
@@ -49,7 +47,7 @@ bool UvcGrabber::GrabFrames(int frames, const std::string& fullFolderPath, int f
         std::cerr << "Failed to open device\n";
         return false;
     }
-    ioManager.setFileDescriptor(fd);
+    _ioManager->setFileDescriptor(fd);
     struct v4l2_buffer buffers[4];
     void* mem[4];
     unsigned int n_buffers;
@@ -59,7 +57,7 @@ bool UvcGrabber::GrabFrames(int frames, const std::string& fullFolderPath, int f
         struct v4l2_requestbuffers req;
         enum v4l2_buf_type type;
 
-        ioManager.queryCap(&cap);
+        _ioManager->queryCap(&cap);
 
         if (!(cap.capabilities & V4L2_CAP_VIDEO_CAPTURE)) 
         {
@@ -68,30 +66,30 @@ bool UvcGrabber::GrabFrames(int frames, const std::string& fullFolderPath, int f
         }
 
         setFrameFormat(frameWidth, frameHeight, &fmt);
-        ioManager.setFmt(&fmt);
+        _ioManager->setFmt(&fmt);
 
         n_buffers = 4;
         setRequestedBuffers(n_buffers, &req);
-        ioManager.requestBuffers(&req);
+        _ioManager->requestBuffers(&req);
 
         for (unsigned int i = 0; i < n_buffers; ++i) 
         {
             setFrameBuffer(i, &buffers[i]);
-            ioManager.queryBuffer(&buffers[i]);
+            _ioManager->queryBuffer(&buffers[i]);
             mem[i] = mmap(NULL, buffers[i].length, PROT_READ | PROT_WRITE, MAP_SHARED, fd, buffers[i].m.offset);
             if (mem[i] == MAP_FAILED) 
             {
                 close(fd);
                 throw std::runtime_error("Failed to map buffer");
             }
-            ioManager.queueBuffer(&buffers[i]);
+            _ioManager->queueBuffer(&buffers[i]);
         }
 
         type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-        ioManager.startStreaming(&type);
+        _ioManager->startStreaming(&type);
         saveAllFrames(frames, fullFolderPath.c_str(), mem);
 
-        ioManager.stopStreaming(&type);
+        _ioManager->stopStreaming(&type);
         free_V4L_Resources(fd, n_buffers, mem, buffers);
         return true;
     } catch (std::runtime_error& err) {
@@ -180,12 +178,12 @@ void UvcGrabber::saveAllFrames(int frames, const char* folderPath, void** memory
         int r;
 
         FD_ZERO(&fds);
-        FD_SET(ioManager.getFileDescriptor(), &fds);
+        FD_SET(_ioManager->getFileDescriptor(), &fds);
 
         tv.tv_sec = 2;
         tv.tv_usec = 0;
 
-        r = select(ioManager.getFileDescriptor() + 1, &fds, NULL, NULL, &tv);
+        r = select(_ioManager->getFileDescriptor() + 1, &fds, NULL, NULL, &tv);
         if (-1 == r) {
             if (EINTR == errno)
                 continue;
@@ -201,11 +199,11 @@ void UvcGrabber::saveAllFrames(int frames, const char* folderPath, void** memory
         buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
         buf.memory = V4L2_MEMORY_MMAP;
 
-        ioManager.dequeueBuffer(&buf);
+        _ioManager->dequeueBuffer(&buf);
         char filename[256];
         snprintf(filename, sizeof(filename), "%s/frame%d.jpg", folderPath, count);
         saveOneFrame(filename, memory, &buf);
-        ioManager.queueBuffer(&buf);
+        _ioManager->queueBuffer(&buf);
         count++;
     }
 }
@@ -215,7 +213,7 @@ void UvcGrabber::saveOneFrame(char* filename, void** memory, struct v4l2_buffer*
     FILE* file = fopen(filename, "wb");
     if (file == NULL)
     {
-        close(ioManager.getFileDescriptor());
+        close(_ioManager->getFileDescriptor());
         throw std::runtime_error("Failed to open file");
     } 
 
