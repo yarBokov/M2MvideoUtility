@@ -3,7 +3,7 @@
 #include <stdexcept>
 #include "GrabberFolderManager.hpp"
 
-ArgsManager::ArgsManager(int argc, char** argv, std::unique_ptr < FolderOperations > folderOps)
+ArgsManager::ArgsManager(int argc, char** argv, std::shared_ptr < FolderOperations > folderOps)
 {
 	this->argc = argc;
 	folderManager = std::move(folderOps);
@@ -66,18 +66,12 @@ void ArgsManager::invokeClearStrategy(UvcGrabber& grabber)
 
 void ArgsManager::invokeCameraStrategy(UvcGrabber& grabber, bool deviceIsGiven)
 {
-	GrabberFolderManager* gfmPtr = dynamic_cast < GrabberFolderManager* >(folderManager.get());
-	if (gfmPtr == nullptr)
-	{
-		throw std::runtime_error("Error while casting FolderOperations pointer to GrabberFolderManager pointer!");
-	}
-	std::string imgDir = gfmPtr->getImagesFolderName();
-	std::string videoDir = gfmPtr->getVideoFolderName();
-	folderManager.reset(gfmPtr); 
+	std::shared_ptr < GrabberFolderManager > gfmPtr = std::dynamic_pointer_cast < GrabberFolderManager >(folderManager);
 	if (mode == "f" || mode == "frames" || mode == "frame")
 	{
 		if (!folderManager->makeFolderForImages(argvVec[3 + int(deviceIsGiven)]))
 			throw std::runtime_error("Error occured while making folder for frames");
+		std::string imgDir = gfmPtr->getImagesFolderName();
 		if (!grabber.GrabFrames(atoi(argvVec[2 + int(deviceIsGiven)].c_str()), imgDir))
 			throw std::runtime_error("Error occured while grabbing frames");
 		if (!grabber.AddFrameTimeTag(imgDir))
@@ -88,6 +82,7 @@ void ArgsManager::invokeCameraStrategy(UvcGrabber& grabber, bool deviceIsGiven)
 	{
 		if (!folderManager->makeFolderForVideo(argvVec[3 + int(deviceIsGiven)]))
 			throw std::runtime_error("Error occured while making folder for video");
+		std::string videoDir = gfmPtr->getVideoFolderName();
 		if (!grabber.CaptureVideo(atoi(argvVec[2 + int(deviceIsGiven)].c_str()), videoDir))
 			throw std::runtime_error("Error occured while capturing video");
 	} 

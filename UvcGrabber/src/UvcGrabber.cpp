@@ -110,7 +110,6 @@ bool UvcGrabber::AddFrameTimeTag(std::string& fullFolderPath, int coordX /* = 10
         std::cerr << "Директория кадров пуста!\n";
         return false;
     }
-    folderOps.release();
     int frameTimeIndex = 0;
     for (const auto& entry : fs::directory_iterator(fullFolderPath))
     {

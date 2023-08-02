@@ -11,7 +11,9 @@ namespace
 }
 
 GrabberFolderManager::GrabberFolderManager():
-	_workDirectoryPath(getWorkingDirectory())
+	_workDirectoryPath(getWorkingDirectory()),
+	_imagesDirectoryPath(""),
+	_videoDirectoryPath("")
 {}
 
 std::string GrabberFolderManager::getWorkingDirectory()

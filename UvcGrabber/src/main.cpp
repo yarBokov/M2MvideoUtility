@@ -6,13 +6,14 @@
 #include "FolderOperations.hpp"
 #include "GrabberFolderManager.hpp"
 #include <memory>
+#include <iostream>
 
 int main (int argc, char** argv)
 {
-	std::unique_ptr < IoctlOperations > ioFuncs = std::make_unique < VideoDevIoctlManager >();
+	auto ioFuncs = std::make_unique < VideoDevIoctlManager >();
 	UvcGrabber grabber(std::move(ioFuncs));
-	std::unique_ptr < FolderOperations > folderOps = std::make_unique < GrabberFolderManager >();
-	ArgsManager manager(argc, argv, std::move(folderOps));
+	auto folderOps = std::make_shared < GrabberFolderManager >();
+	ArgsManager manager(argc, argv, std::make_shared < GrabberFolderManager >());
 	if (!manager.setProgramStrategy(grabber))
 		return -1;
 	return 0;
