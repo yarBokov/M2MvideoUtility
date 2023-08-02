@@ -26,9 +26,10 @@ bool GrabberFolderManager::makeFolderForImages(const std::string& folderName)
 	std::string imgDir = _workDirectoryPath + folderName;
     if (fs::is_directory(imgDir)) 
     {
-        return clearDirectory(imgDir);
+        if (clearDirectory(imgDir))
+        	_imagesDirectoryPath = imgDir;
     } 
-    if (makeFolder(imgDir))
+    else if (makeFolder(imgDir))
     	_imagesDirectoryPath = imgDir;
     return true;
 }
@@ -38,9 +39,10 @@ bool GrabberFolderManager::makeFolderForVideo(const std::string& folderName)
 	std::string videoDir = _workDirectoryPath + folderName;
     if (fs::is_directory(videoDir)) 
     {
+    	_videoDirectoryPath = videoDir;
         return true;
     } 
-    if (makeFolder(videoDir))
+    else if (makeFolder(videoDir))
     	_videoDirectoryPath = videoDir;
     return true;
 }
