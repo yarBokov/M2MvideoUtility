@@ -22,20 +22,39 @@
 #include "GrabberFolderManager.hpp"
 #include <experimental/filesystem>
 
+#define N_BUFFERS 4
+
 namespace
 {
     std::string getTime();
     std::string getVideoFolderName(const std::string& folderPath);
 }
 
+UvcGrabber::UvcGrabber()
+{}
 
-UvcGrabber::UvcGrabber(std::unique_ptr < IoctlOperations > ioFuncs):
+UvcGrabber::UvcGrabber(std::shared_ptr < IoctlOperations > ioFuncs):
     _cameraDeviceName("/dev/video0"),
-    _ioManager(std::move(ioFuncs))
+    _ioManager(ioFuncs)
 {}
 
 UvcGrabber::~UvcGrabber()
 {}
+
+UvcGrabber::UvcGrabber(const UvcGrabber& grabber)
+{
+    this->_cameraDeviceName = grabber._cameraDeviceName;
+    this->_framesTimeVec = grabber._framesTimeVec;
+    this->_ioManager = grabber._ioManager;
+}
+
+UvcGrabber& UvcGrabber::operator=(const UvcGrabber& other)
+{
+    this->_cameraDeviceName = other._cameraDeviceName;
+    this->_framesTimeVec = other._framesTimeVec;
+    this->_ioManager = other._ioManager;
+    return *this;
+}
 
 void UvcGrabber::setDevice(const std::string& deviceName)
 {
@@ -51,9 +70,8 @@ bool UvcGrabber::GrabFrames(int frames, const std::string& fullFolderPath, int f
         return false;
     }
     _ioManager->setFileDescriptor(fd);
-    struct v4l2_buffer buffers[4];
-    void* mem[4];
-    unsigned int n_buffers;
+    struct v4l2_buffer buffers[N_BUFFERS];
+    void* mem[N_BUFFERS];
     try {
         struct v4l2_capability cap;
         struct v4l2_format fmt;
@@ -71,11 +89,10 @@ bool UvcGrabber::GrabFrames(int frames, const std::string& fullFolderPath, int f
         setFrameFormat(frameWidth, frameHeight, &fmt);
         _ioManager->setFmt(&fmt);
 
-        n_buffers = 4;
-        setRequestedBuffers(n_buffers, &req);
+        setRequestedBuffers(N_BUFFERS, &req);
         _ioManager->requestBuffers(&req);
 
-        for (unsigned int i = 0; i < n_buffers; ++i) 
+        for (unsigned int i = 0; i < N_BUFFERS; ++i) 
         {
             setFrameBuffer(i, &buffers[i]);
             _ioManager->queryBuffer(&buffers[i]);
@@ -93,7 +110,7 @@ bool UvcGrabber::GrabFrames(int frames, const std::string& fullFolderPath, int f
         saveAllFrames(frames, fullFolderPath.c_str(), mem);
 
         _ioManager->stopStreaming(&type);
-        free_V4L_Resources(fd, n_buffers, mem, buffers);
+        free_V4L_Resources(fd, N_BUFFERS, mem, buffers);
         return true;
     } catch (std::runtime_error& err) {
         std::cerr << err.what() << "\n";

@@ -11,10 +11,11 @@
 class UvcGrabber
 {
 	public:
-		UvcGrabber(std::unique_ptr < IoctlOperations > ioFuncs);
+		UvcGrabber();
+		UvcGrabber(std::shared_ptr < IoctlOperations > ioFuncs);
 		~UvcGrabber();
-		UvcGrabber(const UvcGrabber& grabber) = delete;
-		UvcGrabber& operator=(const UvcGrabber& other) = delete;
+		UvcGrabber(const UvcGrabber& grabber);
+		UvcGrabber& operator=(const UvcGrabber& other);
 		void setDevice(const std::string& deviceName);
 		bool GrabFrames(int frames, const std::string& fullFolderPath, int frameWidth = 640 , int frameHeight = 480);
 		bool AddFrameTimeTag(std::string& fullFolderPath, int coordX = 10, int coordY = 30, std::string ext =".jpg");
@@ -22,7 +23,7 @@ class UvcGrabber
 	private:
 		std::string _cameraDeviceName;
 		std::vector<std::string> _framesTimeVec;
-		std::unique_ptr < IoctlOperations > _ioManager;
+		std::shared_ptr < IoctlOperations > _ioManager;
 
 		void setFrameFormat(int width, int height, struct v4l2_format* fmt);
 		void setRequestedBuffers(unsigned int req_count, struct v4l2_requestbuffers* req);
